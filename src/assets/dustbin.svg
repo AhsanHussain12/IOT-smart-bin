@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Bin Body -->
+    <path d="M100 100 L300 100 L350 200 L350 450 L50 450 L50 200 Z" fill="#2d2d2d" stroke="#FFD700" stroke-width="4"/>
+    
+    <!-- Bin Lid -->
+    <path d="M100 100 L300 100 L350 200 L50 200 Z" fill="#2d2d2d" stroke="#FFD700" stroke-width="4"/>
+    
+    <!-- Bin Handle -->
+    <path d="M150 100 L250 100" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/>
+    
+    <!-- Bin Details -->
+    <path d="M100 200 L300 200" stroke="#FFD700" stroke-width="2" stroke-dasharray="10 5"/>
+    <path d="M100 300 L300 300" stroke="#FFD700" stroke-width="2" stroke-dasharray="10 5"/>
+    <path d="M100 400 L300 400" stroke="#FFD700" stroke-width="2" stroke-dasharray="10 5"/>
+    
+    <!-- Bin Feet -->
+    <rect x="60" y="450" width="40" height="10" fill="#FFD700"/>
+    <rect x="300" y="450" width="40" height="10" fill="#FFD700"/>
+</svg> 
