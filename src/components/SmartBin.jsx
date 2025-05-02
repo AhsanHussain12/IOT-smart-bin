@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue } from 'firebase/database';
+import emailjs from '@emailjs/browser';
 import './SmartBin.css';
 import binImage from '../assets/dustbin.svg';
 
@@ -14,16 +15,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Log the config to check if it's loaded correctly
-console.log("Firebase Config:", {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ? "Loaded" : "Missing",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ? "Loaded" : "Missing",
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL ? "Loaded" : "Missing",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ? "Loaded" : "Missing",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ? "Loaded" : "Missing",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? "Loaded" : "Missing",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID ? "Loaded" : "Missing"
-});
+// EmailJS configuration
+const EMAILJS_CONFIG = {
+  serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+  templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+  publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+};
+
 
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
@@ -39,6 +37,43 @@ const SmartBin = () => {
     servo: "disconnected",
     status: false
   });
+
+  // Track if email has been sent
+  const emailSentRef = useRef(false);
+
+  const sendEmailNotification = useCallback(async (level) => {
+    if (level > 80 && !emailSentRef.current) {
+      try {
+        const templateParams = {
+          to_name: 'Ahsan',
+          bin_level: level,
+          date: new Date().toLocaleString(),
+          message: `The smart bin is ${level}% full and needs attention.`,
+          to_email: 'ahsan123hussain@gmail.com'
+        };
+
+        await emailjs.send(
+          EMAILJS_CONFIG.serviceId,
+          EMAILJS_CONFIG.templateId,
+          templateParams,
+          EMAILJS_CONFIG.publicKey
+        );
+
+        console.log('Email notification sent successfully');
+        emailSentRef.current = true;
+
+        // Reset email sent flag after 1 hour
+        setTimeout(() => {
+          emailSentRef.current = false;
+        }, 3600000); // 1 hour in milliseconds
+      } catch (error) {
+        console.error('Failed to send email notification:', error);
+      }
+    } else if (level <= 85) {
+      // Reset the email sent flag when level goes below 85%
+      emailSentRef.current = false;
+    }
+  }, []);
 
   const getProgressBarColor = useCallback((level) => {
     return level > 80 ? '#FF4444' : '#4CAF50';
@@ -60,10 +95,15 @@ const SmartBin = () => {
       const data = snapshot.val();
       if (data) {
         // Use functional update to ensure we're working with the latest state
-        setBinData(prevData => ({
-          ...prevData,
-          ...data
-        }));
+        setBinData(prevData => {
+          const newData = {
+            ...prevData,
+            ...data
+          };
+          // Check bin level and send email if needed
+          sendEmailNotification(newData.binFilled);
+          return newData;
+        });
       }
     }, (error) => {
       console.error("Firebase read failed:", error);
@@ -71,7 +111,7 @@ const SmartBin = () => {
 
     // Cleanup the listener when component unmounts
     return () => unsubscribe();
-  }, []);
+  }, [sendEmailNotification]);
 
   return (
     <div className="smart-bin-container">
